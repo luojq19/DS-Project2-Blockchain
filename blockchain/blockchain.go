@@ -10,37 +10,37 @@ import (
 )
 
 type Block struct {
-	data         map[string]interface{}
-	hash         string
-	previousHash string
-	timestamp    time.Time
-	nonce          int
+	Data         map[string]interface{}
+	Hash         string
+	PreviousHash string
+	Timestamp    time.Time
+	Nonce          int
 }
 
 type Blockchain struct {
-	genesisBlock Block
-	chain        []Block
-	difficulty   int
+	GenesisBlock Block
+	Chain        []Block
+	Difficulty   int
 }
 
 func (b Block) CalculateHash() string {
-	data, _ := json.Marshal(b.data)
-	blockData := b.previousHash + string(data) + b.timestamp.String() + strconv.Itoa(b.nonce)
+	data, _ := json.Marshal(b.Data)
+	blockData := b.PreviousHash + string(data) + b.Timestamp.String() + strconv.Itoa(b.Nonce)
 	blockHash := sha256.Sum256([]byte(blockData))
 	return fmt.Sprintf("%x", blockHash)
 }
 
 func (b *Block) Mine(difficulty int) {
-	for !strings.HasPrefix(b.hash, strings.Repeat("0", difficulty)) {
-			b.nonce++
-			b.hash = b.CalculateHash()
+	for !strings.HasPrefix(b.Hash, strings.Repeat("0", difficulty)) {
+			b.Nonce++
+			b.Hash = b.CalculateHash()
 	}
 }
 
 func CreateBlockchain(difficulty int) Blockchain {
 	genesisBlock := Block{
-			hash:      "0",
-			timestamp: time.Now(),
+			Hash:      "0",
+			Timestamp: time.Now(),
 	}
 	return Blockchain{
 			genesisBlock,
@@ -55,21 +55,21 @@ func (b *Blockchain) AddBlock(from, to string, amount float64) {
 			"to":     to,
 			"amount": amount,
 	}
-	lastBlock := b.chain[len(b.chain)-1]
+	lastBlock := b.Chain[len(b.Chain)-1]
 	newBlock := Block{
-			data:         blockData,
-			previousHash: lastBlock.hash,
-			timestamp:    time.Now(),
+			Data:         blockData,
+			PreviousHash: lastBlock.Hash,
+			Timestamp:    time.Now(),
 	}
-	newBlock.Mine(b.difficulty)
-	b.chain = append(b.chain, newBlock)
+	newBlock.Mine(b.Difficulty)
+	b.Chain = append(b.Chain, newBlock)
 }
 
 func (b Blockchain) CheckValid() bool {
-	for i := range b.chain[1:] {
-			previousBlock := b.chain[i]
-			currentBlock := b.chain[i+1]
-			if currentBlock.hash != currentBlock.CalculateHash() || currentBlock.previousHash != previousBlock.hash {
+	for i := range b.Chain[1:] {
+			previousBlock := b.Chain[i]
+			currentBlock := b.Chain[i+1]
+			if currentBlock.Hash != currentBlock.CalculateHash() || currentBlock.PreviousHash != previousBlock.Hash {
 					return false
 			}
 	}
