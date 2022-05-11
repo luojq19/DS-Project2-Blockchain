@@ -1,6 +1,9 @@
 package main
 
 import (
+	"bytes"
+	"encoding/gob"
+	"log"
 	"time"
 )
 
@@ -8,15 +11,16 @@ import (
 type Block struct {
 	Timestamp     int64
 	Difficulty    int64
-	Data          []byte
+	Transactions  []*Transaction
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
+	Height        int
 }
 
 // NewBlock creates and returns Block
-func NewBlock(data string, prevBlockHash []byte, difficulty int64) *Block {
-	block := &Block{time.Now().Unix(), difficulty, []byte(data), prevBlockHash, []byte{}, 0}
+func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int, difficulty int64) *Block {
+	block := &Block{time.Now().Unix(), difficulty, transactions, prevBlockHash, []byte{}, 0, height}
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
 
@@ -27,6 +31,42 @@ func NewBlock(data string, prevBlockHash []byte, difficulty int64) *Block {
 }
 
 // NewGenesisBlock creates and returns genesis Block
-func NewGenesisBlock(difficulty int64) *Block {
-	return NewBlock("Genesis Block", []byte{}, difficulty)
+func NewGenesisBlock(Coinbase *Transaction, difficulty int64) *Block {
+	return NewBlock([]*Transaction{Coinbase}, []byte{}, 0, difficulty)
+}
+
+func (b *Block) HashTransactions() []byte {
+	var transactions [][]byte
+
+	for _, tx := range b.Transactions {
+		transactions = append(transactions, tx.Serialize())
+	}
+	temp := NewMerkleTree(transactions)
+
+	return temp.RootNode.Data
+}
+
+func (b *Block) Serialize() []byte {
+	var result bytes.Buffer
+	encoder := gob.NewEncoder(&result)
+
+	err := encoder.Encode(b)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return result.Bytes()
+}
+
+// DeserializeBlock deserializes a block
+func DeserializeBlock(d []byte) *Block {
+	var block Block
+
+	decoder := gob.NewDecoder(bytes.NewReader(d))
+	err := decoder.Decode(&block)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return &block
 }

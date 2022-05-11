@@ -40,7 +40,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 		data := bytes.Join(
 			[][]byte{
 				pow.block.PrevBlockHash,
-				pow.block.Data,
+				pow.block.HashTransactions(),
 				[]byte(strconv.FormatInt(pow.block.Timestamp, 16)),
 				[]byte(strconv.FormatInt(int64(pow.block.Difficulty), 16)),
 				[]byte(strconv.FormatInt(int64(nonce), 16)),
@@ -74,6 +74,7 @@ func (pow *ProofOfWork) Validate() bool {
 	data := bytes.Join(
 		[][]byte{
 			pow.block.PrevBlockHash,
+			pow.block.HashTransactions(),
 			[]byte(strconv.FormatInt(pow.block.Timestamp, 16)),
 			[]byte(strconv.FormatInt(int64(pow.block.Difficulty), 16)),
 			[]byte(strconv.FormatInt(int64(pow.block.Nonce), 16)),
