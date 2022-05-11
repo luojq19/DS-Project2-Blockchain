@@ -162,7 +162,7 @@ func (tx *Transaction) Verify(prevTXs map[string]Transaction) bool {
 
 		dataToVerify := fmt.Sprintf("%x\n", txCopy)
 
-		rawPubKey := ecdsa.PublicKey{Curve: curve, X: &x, Y: &y}
+		rawPubKey := ecdsa.PublicKey{curve, &x, &y}
 		if ecdsa.Verify(&rawPubKey, []byte(dataToVerify), &r, &s) == false {
 			return false
 		}
@@ -197,15 +197,15 @@ func NewUTXOTransaction(wallet *Wallet, to string, amount int, UTXOSet *UTXOSet)
 	var inputs []TXInput
 	var outputs []TXOutput
 
-	pubKeyHash := HashPubKey(wallet.PublicKey)
-	acc, validOutputs := UTXOSet.FindSpendableOutputs(pubKeyHash, amount)
+	pubkey_hash := HashPubKey(wallet.PublicKey)
+	acc, valid_output := UTXOSet.FindSpendableOutputs(pubkey_hash, amount)
 
 	if acc < amount {
 		log.Panic("ERROR: Not enough funds")
 	}
 
 	// Build a list of inputs
-	for txid, outs := range validOutputs {
+	for txid, outs := range valid_output {
 		txID, err := hex.DecodeString(txid)
 		if err != nil {
 			log.Panic(err)
@@ -243,3 +243,67 @@ func DeserializeTransaction(data []byte) Transaction {
 
 	return transaction
 }
+
+type TXInput struct {
+	Txid      []byte
+	Vout      int
+	Signature []byte
+	PubKey    []byte
+}
+
+func (in *TXInput) UsesKey(pubKeyHash []byte) bool {
+	locking_hash := HashPubKey(in.PubKey)
+
+	return bytes.Compare(locking_hash, pubKeyHash) == 0
+}
+
+type TXOutput struct {
+	Value      int
+	PubKeyHash []byte
+}
+
+func (out *TXOutput) Lock(address []byte) {
+	pubkey_hash := Base58Decode(address)
+	pubkey_hash = pubkey_hash[1 : len(pubkey_hash)-4]
+	out.PubKeyHash = pubkey_hash
+}
+
+func (out *TXOutput) IsLockedWithKey(pubKeyHash []byte) bool {
+	return bytes.Compare(out.PubKeyHash, pubKeyHash) == 0
+}
+
+func NewTXOutput(value int, address string) *TXOutput {
+	txo := &TXOutput{value, nil}
+	txo.Lock([]byte(address))
+
+	return txo
+}
+
+type TXOutputs struct {
+	Outputs []TXOutput
+}
+
+func (outs TXOutputs) Serialize() []byte {
+	var buff bytes.Buffer
+
+	enc := gob.NewEncoder(&buff)
+	err := enc.Encode(outs)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return buff.Bytes()
+}
+
+func DeserializeOutputs(data []byte) TXOutputs {
+	var outputs TXOutputs
+
+	dec := gob.NewDecoder(bytes.NewReader(data))
+	err := dec.Decode(&outputs)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return outputs
+}
+

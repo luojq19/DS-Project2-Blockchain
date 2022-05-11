@@ -4,19 +4,16 @@ import (
 	"crypto/sha256"
 )
 
-// MerkleTree represent a Merkle tree
 type MerkleTree struct {
 	RootNode *MerkleNode
 }
 
-// MerkleNode represent a Merkle tree node
 type MerkleNode struct {
 	Left  *MerkleNode
 	Right *MerkleNode
 	Data  []byte
 }
 
-// NewMerkleTree creates a new Merkle tree from a sequence of data
 func NewMerkleTree(data [][]byte) *MerkleTree {
 	var nodes []MerkleNode
 
@@ -24,28 +21,27 @@ func NewMerkleTree(data [][]byte) *MerkleTree {
 		data = append(data, data[len(data)-1])
 	}
 
-	for _, datum := range data {
-		node := NewMerkleNode(nil, nil, datum)
-		nodes = append(nodes, *node)
+	for _, d := range data {
+		new_node := NewMerkleNode(nil, nil, d)
+		nodes = append(nodes, *new_node)
 	}
 
 	for i := 0; i < len(data)/2; i++ {
-		var newLevel []MerkleNode
+		var new_level []MerkleNode
 
 		for j := 0; j < len(nodes); j += 2 {
 			node := NewMerkleNode(&nodes[j], &nodes[j+1], nil)
-			newLevel = append(newLevel, *node)
+			new_level = append(new_level, *node)
 		}
 
-		nodes = newLevel
+		nodes = new_level
 	}
 
-	mTree := MerkleTree{&nodes[0]}
+	merkle_tree := MerkleTree{&nodes[0]}
 
-	return &mTree
+	return &merkle_tree
 }
 
-// NewMerkleNode creates a new Merkle tree node
 func NewMerkleNode(left, right *MerkleNode, data []byte) *MerkleNode {
 	mNode := MerkleNode{}
 
