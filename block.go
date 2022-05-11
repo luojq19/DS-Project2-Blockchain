@@ -7,6 +7,7 @@ import (
 // Block keeps block headers
 type Block struct {
 	Timestamp     int64
+	Difficulty    int64
 	Data          []byte
 	PrevBlockHash []byte
 	Hash          []byte
@@ -14,8 +15,8 @@ type Block struct {
 }
 
 // NewBlock creates and returns Block
-func NewBlock(data string, prevBlockHash []byte) *Block {
-	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}, 0}
+func NewBlock(data string, prevBlockHash []byte, difficulty int64) *Block {
+	block := &Block{time.Now().Unix(), difficulty, []byte(data), prevBlockHash, []byte{}, 0}
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
 
@@ -26,6 +27,6 @@ func NewBlock(data string, prevBlockHash []byte) *Block {
 }
 
 // NewGenesisBlock creates and returns genesis Block
-func NewGenesisBlock() *Block {
-	return NewBlock("Genesis Block", []byte{})
+func NewGenesisBlock(difficulty int64) *Block {
+	return NewBlock("Genesis Block", []byte{}, difficulty)
 }

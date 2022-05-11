@@ -5,10 +5,12 @@ import (
 	"strconv"
 )
 
+const difficulty = 24
+
 func main() {
-	bc := NewBlockchain()
-	bc.AddBlock("Send 1 BTC to Ivan")
-	bc.AddBlock("Send 2 more BTC to Ivan")
+	bc := NewBlockchain(difficulty)
+	bc.AddBlock("Send 1 BTC to Ivan", difficulty)
+	bc.AddBlock("Send 2 more BTC to Ivan", difficulty)
 	for _, block := range bc.blocks {
 		fmt.Printf("Prev. hash: %x\n", block.PrevBlockHash)
 		fmt.Printf("Data: %s\n", block.Data)
