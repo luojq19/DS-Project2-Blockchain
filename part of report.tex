@@ -1,0 +1,100 @@
+% Modified based on Xiaoming Sun's template and https://www.overleaf.com/latex/templates/cs6780-assignment-template/hgjyygbykvrf
+
+\documentclass[a4 paper,12pt]{article}
+\usepackage[inner=2.0cm,outer=2.0cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage[rgb]{xcolor}
+\usepackage{verbatim}
+\usepackage{subcaption}
+\usepackage{fancyhdr}
+\usepackage[colorlinks=true, urlcolor=blue, linkcolor=blue, citecolor=blue]{hyperref}
+\usepackage{booktabs}
+\usepackage{amsmath,amsfonts,amsthm,amssymb}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{extramarks}
+\usepackage{chngpage}
+\usepackage{soul,color}
+\usepackage{graphicx,float,wrapfig}
+\newcommand{\homework}[3]{
+   \pagestyle{myheadings}
+   \thispagestyle{plain}
+   \newpage
+   \setcounter{page}{1}
+   \noindent
+   \begin{center}
+   \framebox{
+        \vbox{\vspace{2mm}
+        \hbox to 6.28in { {\bf Distributed and Blockchain Systems \hfill} {\hfill {\rm #2} {\rm #3}} }
+        \vspace{4mm}
+        \hbox to 6.28in { {\Large \hfill #1  \hfill} }
+        \vspace{3mm}}
+   }
+   \end{center}
+   \vspace*{4mm}
+}
+\newcommand\numberthis{\addtocounter{equation}{1}\tag{\theequation}}
+\newcommand{\tr}{\mbox{tr}}
+\newcommand{\italic}[1]{\itshape #1 \upshape}
+\newcommand{\indicate}[1]{\itshape\textbf{#1}\upshape}
+\newcommand{\code}[1]{\tt#1\rm}
+\newcommand{\answer}{\indicate{Answer}:}
+\renewcommand{\proof}{\indicate{Proof}:}
+\newcommand{\solution}{\indicate{Solution}:}
+\newenvironment{listing}{\left\{\begin{aligned}}{\end{aligned} \right.}
+
+\begin{document}
+\homework{Report}{}{}
+
+\subsection*{To open the project}
+Run the following code in powershell:
+\begin{center}
+	\code{go run *.go <nodeID> <workload>}
+\end{center}
+where \code{<nodeID>} is a string (default \code{3000}, \code{3001}, \code{3002},...) to identify stored blockchains, and \code{<workload>} is a file (default \code{test.data}, \code{test1.data}, \code{test2.data},...) with series of operations contained:
+\begin{center}
+	\begin{tabular}{|l|l|}
+		\hline
+		codes&operations\\
+		\hline
+		\hline
+		\code{**createblockchain <name>} & create a blockchain with wallet \code{<name>}\\
+		\hline
+		\code{**createwallet <name>} & create a wallet (i.e. an address) named \code{<name>}\\
+		\hline
+		\code{**getbalance <name>} & get the balance of the wallet named \code{<name>}\\
+		\hline
+		\code{**listaddresses} & list all addresses from the wallet file\\
+		\hline
+		\code{**printchain} & print all the blocks of the blockchain\\
+		\hline
+		\code{**reindexUTXO} & rebuild the UTXO set\\
+		\hline
+		\code{**send <name1> <name2> <amount>} & a transaction from \code{<name1>} to \code{<name2>} of \code{<amount>}\\
+		\hline
+		\code{**startnode <mode> <name>} & \begin{tabular}{l}
+			\code{<mode>}=\code{normal}:only listen for txs\\
+			\code{<mode>}=\code{thread}:both listen for txs and do operations\\
+			\code{<mode>}=\code{miner}:only mine, with wallet \code{<name>}\\
+		\end{tabular}\\
+		\hline
+		\code{**sleep <period>} & sleep for \code{<period>} (waiting for some operations)\\
+		\hline
+	\end{tabular}
+\end{center}
+
+
+\iffalse
+\section*{1.1.1}
+\subsection*{(1)} 
+Write your solution here.
+
+\section*{Special Problem 1}
+
+Write your solution here.
+
+\paragraph{Acknowlwedgements:} The author thanks XXX and YYY for discussion on Problem A.
+\fi
+
+\end{document} 
