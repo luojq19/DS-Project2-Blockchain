@@ -6,19 +6,38 @@ import (
 	"strings"
 	"strconv"
 	"time"
+	"io/ioutil"
 )
+
+func getAddress(name string) (string){
+	byteadd, err := ioutil.ReadFile("address_"+name+".wal")
+	if err != nil {
+		log.Panic(err)
+	}
+	return string(byteadd)
+}
+
+func setAddress(name, address string){
+	err := ioutil.WriteFile("address_"+name+".wal", []byte(address), 0644)
+	if err != nil {
+		panic(err)
+	}
+}
 
 type CLI struct{
 	nodeID string
+	server bool
 }
 
 func NewCLI(ID string) (this *CLI){
 	return &CLI{
 		nodeID : ID,
+		server : false,
 	}
 }
 
-func (this *CLI) createBlockchain(address string) {
+func (this *CLI) createBlockchain(name string) {
+	address := getAddress(name)
 	if !ValidateAddress(address) {
 		log.Panic("ERROR: Address is not valid")
 	}
@@ -31,15 +50,18 @@ func (this *CLI) createBlockchain(address string) {
 	fmt.Println("Done!")
 }
 
-func (this *CLI) createWallet() {
+func (this *CLI) createWallet(name string) {
 	wallets, _ := NewWallets(this.nodeID)
 	address := wallets.CreateWallet()
 	wallets.SaveToFile(this.nodeID)
 
+	setAddress(name, address)
+
 	fmt.Printf("Your new address: %s\n", address)
 }
 
-func (this *CLI) getBalance(address string) {
+func (this *CLI) getBalance(name string) {
+	address := getAddress(name)
 	if !ValidateAddress(address) {
 		log.Panic("ERROR: Address is not valid")
 	}
@@ -56,7 +78,7 @@ func (this *CLI) getBalance(address string) {
 		balance += out.Value
 	}
 
-	fmt.Printf("Balance of '%s': %d\n", address, balance)
+	fmt.Printf("Balance of '%s': %d\n", name, balance)
 }
 
 func (this *CLI) listAddresses() {
@@ -105,7 +127,9 @@ func (this *CLI) reindexUTXO() {
 	fmt.Printf("Done! There are %d transactions in the UTXO set.\n", count)
 }
 
-func (this *CLI) send(from, to string, amount int, mineNow bool) {
+func (this *CLI) send(fromName, toName string, amount int, mineNow bool) {
+	from := getAddress(fromName)
+	to := getAddress(toName)
 	if !ValidateAddress(from) {
 		log.Panic("ERROR: Sender address is not valid")
 	}
@@ -138,44 +162,64 @@ func (this *CLI) send(from, to string, amount int, mineNow bool) {
 	fmt.Println("Success!")
 }
 
-func (this *CLI) startNode(minerAddress string) {
+func (this *CLI) startNode() {
 	fmt.Printf("Starting node %s\n", this.nodeID)
-	if len(minerAddress) > 0 {
-		if ValidateAddress(minerAddress) {
-			fmt.Println("Mining is on. Address to receive rewards: ", minerAddress)
-		} else {
-			log.Panic("Wrong miner address!")
-		}
+	StartServer(this, "")
+}
+
+func (this *CLI) startMine(minerName string) {
+	fmt.Printf("Starting node %s\n", this.nodeID)
+	minerAddress := getAddress(minerName)
+	if ValidateAddress(minerAddress) {
+		fmt.Println("Mining is on. Address to receive rewards: ", minerAddress)
+	} else {
+		log.Panic("Wrong miner address!")
 	}
-	StartServer(this.nodeID, minerAddress)
+	StartServer(this, minerAddress)
 }
 
 func (this *CLI) Atomic(text string) (){
 	command := strings.SplitN(text, " ", 2)
 	switch command[0]{
 	case "**createblockchain":
+		fmt.Println("Creating New Blockchain.")
 		this.createBlockchain(command[1])
 	case "**createwallet":
-		this.createWallet()
+		fmt.Println("Creating A New wallet.")
+		this.createWallet(command[1])
 	case "**getbalance":
+		fmt.Println("Getting balance.")
 		this.getBalance(command[1])
 	case "**listaddresses":
+		fmt.Println("Listing existed addresses.")
 		this.listAddresses()
 	case "**printchain":
+		fmt.Println("Printing the whole Blockchain.")
 		this.printChain()
 	case "**reindexUTXO":
+		fmt.Println("Re-indexing UTXOs.")
 		this.reindexUTXO()
 	case "**send":
+		fmt.Println("Performing a transaction.")
 		ifmine := strings.HasSuffix(command[1], "mine")
 		args := strings.Split(command[1], " ")
 		amount, _ := strconv.Atoi(args[2])
 		this.send(args[0], args[1], amount, ifmine)
 	case "**startnode":
-		if strings.HasPrefix(command[1], "miner"){
-			args := strings.Split(command[1], " ")
-			this.startNode(args[1])
-		}else{
-			this.startNode("")
+		args := strings.Split(command[1], " ")
+		switch args[0]{
+		case "normal":
+			if this.server{
+				for{}
+			}else{
+				this.startNode()
+			}
+		case "thread":
+			if this.server == false{
+				go this.startNode()
+			}
+		case "miner":
+			this.startMine(args[1])
 		}
 	case "**sleep":
 		period, _ := strconv.Atoi(command[1])
