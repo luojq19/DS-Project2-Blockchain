@@ -6,13 +6,13 @@ type Blockchain struct {
 }
 
 // create a new bock
-func NewBlockchain(difficulty int64) *Blockchain {
-	return &Blockchain{[]*Block{NewGenesisBlock(difficulty)}}
+func NewBlockchain() *Blockchain {
+	return &Blockchain{[]*Block{NewGenesisBlock()}}
 }
 
 // add a new block to the end of blockchain
-func (bc *Blockchain) AddBlock(data string, difficulty int64) {
+func (bc *Blockchain) AddBlock(data string) {
 	prevBlock := bc.blocks[len(bc.blocks)-1]
-	newBlock := NewBlock(data, prevBlock.Hash, difficulty)
+	newBlock := NewBlock(data, prevBlock.Hash)
 	bc.blocks = append(bc.blocks, newBlock)
 }

@@ -10,8 +10,7 @@ import (
 )
 
 const maxNonce = math.MaxInt64
-
-// const difficulty = 24
+const difficulty = 24
 const printInterval = 10
 
 type ProofOfWork struct {
@@ -22,7 +21,7 @@ type ProofOfWork struct {
 func NewProofOfWork(b *Block) *ProofOfWork {
 	target := big.NewInt(1)
 	// when verifying compare the hash result with target by the former 'difficulty' bits
-	target = target.Lsh(target, uint(256-b.Difficulty))
+	target = target.Lsh(target, uint(256-difficulty))
 	temp := &ProofOfWork{b, target}
 	return temp
 }
@@ -42,7 +41,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 				pow.block.PrevBlockHash,
 				pow.block.Data,
 				[]byte(strconv.FormatInt(pow.block.Timestamp, 16)),
-				[]byte(strconv.FormatInt(int64(pow.block.Difficulty), 16)),
+				[]byte(strconv.FormatInt(int64(difficulty), 16)),
 				[]byte(strconv.FormatInt(int64(nonce), 16)),
 			},
 			[]byte{},
@@ -75,7 +74,7 @@ func (pow *ProofOfWork) Validate() bool {
 		[][]byte{
 			pow.block.PrevBlockHash,
 			[]byte(strconv.FormatInt(pow.block.Timestamp, 16)),
-			[]byte(strconv.FormatInt(int64(pow.block.Difficulty), 16)),
+			[]byte(strconv.FormatInt(int64(difficulty), 16)),
 			[]byte(strconv.FormatInt(int64(pow.block.Nonce), 16)),
 		},
 		[]byte{},
