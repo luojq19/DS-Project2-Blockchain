@@ -2,19 +2,27 @@ package main
 
 import (
 	"log"
+	"fmt"
 	"strings"
 	"strconv"
+	"time"
 )
 
 type CLI struct{
-	nodeID
+	nodeID string
 }
 
-func (cli *CLI) createBlockchain(address, nodeID string) {
+func NewCLI(ID string) (this *CLI){
+	return &CLI{
+		nodeID : ID,
+	}
+}
+
+func (this *CLI) createBlockchain(address string) {
 	if !ValidateAddress(address) {
 		log.Panic("ERROR: Address is not valid")
 	}
-	bc := CreateBlockchain(address, nodeID)
+	bc := CreateBlockchain(address, this.nodeID)
 	defer bc.db.Close()
 
 	UTXOSet := UTXOSet{bc}
@@ -23,19 +31,19 @@ func (cli *CLI) createBlockchain(address, nodeID string) {
 	fmt.Println("Done!")
 }
 
-func (cli *CLI) createWallet(nodeID string) {
-	wallets, _ := NewWallets(nodeID)
+func (this *CLI) createWallet() {
+	wallets, _ := NewWallets(this.nodeID)
 	address := wallets.CreateWallet()
-	wallets.SaveToFile(nodeID)
+	wallets.SaveToFile(this.nodeID)
 
 	fmt.Printf("Your new address: %s\n", address)
 }
 
-func (cli *CLI) getBalance(address, nodeID string) {
+func (this *CLI) getBalance(address string) {
 	if !ValidateAddress(address) {
 		log.Panic("ERROR: Address is not valid")
 	}
-	bc := NewBlockchain(nodeID)
+	bc := NewBlockchain(this.nodeID)
 	UTXOSet := UTXOSet{bc}
 	defer bc.db.Close()
 
@@ -51,8 +59,8 @@ func (cli *CLI) getBalance(address, nodeID string) {
 	fmt.Printf("Balance of '%s': %d\n", address, balance)
 }
 
-func (cli *CLI) listAddresses(nodeID string) {
-	wallets, err := NewWallets(nodeID)
+func (this *CLI) listAddresses() {
+	wallets, err := NewWallets(this.nodeID)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -63,8 +71,8 @@ func (cli *CLI) listAddresses(nodeID string) {
 	}
 }
 
-func (cli *CLI) printChain(nodeID string) {
-	bc := NewBlockchain(nodeID)
+func (this *CLI) printChain() {
+	bc := NewBlockchain(this.nodeID)
 	defer bc.db.Close()
 
 	bci := bc.Iterator()
@@ -88,8 +96,8 @@ func (cli *CLI) printChain(nodeID string) {
 	}
 }
 
-func (cli *CLI) reindexUTXO(nodeID string) {
-	bc := NewBlockchain(nodeID)
+func (this *CLI) reindexUTXO() {
+	bc := NewBlockchain(this.nodeID)
 	UTXOSet := UTXOSet{bc}
 	UTXOSet.Reindex()
 
@@ -97,7 +105,7 @@ func (cli *CLI) reindexUTXO(nodeID string) {
 	fmt.Printf("Done! There are %d transactions in the UTXO set.\n", count)
 }
 
-func (cli *CLI) send(from, to string, amount int, nodeID string, mineNow bool) {
+func (this *CLI) send(from, to string, amount int, mineNow bool) {
 	if !ValidateAddress(from) {
 		log.Panic("ERROR: Sender address is not valid")
 	}
@@ -105,11 +113,11 @@ func (cli *CLI) send(from, to string, amount int, nodeID string, mineNow bool) {
 		log.Panic("ERROR: Recipient address is not valid")
 	}
 
-	bc := NewBlockchain(nodeID)
+	bc := NewBlockchain(this.nodeID)
 	UTXOSet := UTXOSet{bc}
 	defer bc.db.Close()
 
-	wallets, err := NewWallets(nodeID)
+	wallets, err := NewWallets(this.nodeID)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -130,8 +138,8 @@ func (cli *CLI) send(from, to string, amount int, nodeID string, mineNow bool) {
 	fmt.Println("Success!")
 }
 
-func (cli *CLI) startNode(nodeID, minerAddress string) {
-	fmt.Printf("Starting node %s\n", nodeID)
+func (this *CLI) startNode(minerAddress string) {
+	fmt.Printf("Starting node %s\n", this.nodeID)
 	if len(minerAddress) > 0 {
 		if ValidateAddress(minerAddress) {
 			fmt.Println("Mining is on. Address to receive rewards: ", minerAddress)
@@ -139,32 +147,41 @@ func (cli *CLI) startNode(nodeID, minerAddress string) {
 			log.Panic("Wrong miner address!")
 		}
 	}
-	StartServer(nodeID, minerAddress)
+	StartServer(this.nodeID, minerAddress)
 }
 
-func (this *Client) Atomic(text string) (){
+func (this *CLI) Atomic(text string) (){
 	command := strings.SplitN(text, " ", 2)
 	switch command[0]{
 	case "**createblockchain":
-		this.createBlockchain(command[1], this.nodeID)
+		this.createBlockchain(command[1])
 	case "**createwallet":
-		this.createWallet(this.nodeID)
+		this.createWallet()
 	case "**getbalance":
-		this.getBalance(this.nodeID)
+		this.getBalance(command[1])
 	case "**listaddresses":
-		this.listAddresses(this.nodeID)
+		this.listAddresses()
 	case "**printchain":
-		this.printChain(this.nodeID)
+		this.printChain()
 	case "**reindexUTXO":
-		this.reindexUTXO(this.nodeID)
+		this.reindexUTXO()
 	case "**send":
-		ifmine = HasSuffix(command[1], "mine")
+		ifmine := strings.HasSuffix(command[1], "mine")
 		args := strings.Split(command[1], " ")
-		amount, _ := strconv.Atoi(args[1])
-		this.send(args[0], args[2], amount, this.nodeID, ifmine)
+		amount, _ := strconv.Atoi(args[2])
+		this.send(args[0], args[1], amount, ifmine)
 	case "**startnode":
-		args := strings.Split(command[1], " ")
-		this.startNode(args[0], args[1])
+		if strings.HasPrefix(command[1], "miner"){
+			args := strings.Split(command[1], " ")
+			this.startNode(args[1])
+		}else{
+			this.startNode("")
+		}
+	case "**sleep":
+		period, _ := strconv.Atoi(command[1])
+		fmt.Println("Sleeping...")
+		time.Sleep(time.Millisecond * time.Duration(period))
+		fmt.Println("Awake.")
 	}
 	return
 }

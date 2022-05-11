@@ -10,7 +10,7 @@ func input() (*CLI, *os.File){
 	if len(os.Args) < 3{
 		panic(errors.New("Wrong number of arguments."))
 	}
-	cli := &CLI{nodeID = os.Args[1],}
+	cli := NewCLI(os.Args[1])
 	workload := os.Args[2]
 
 	file, err := os.Open(workload)

@@ -1,16 +1,16 @@
-**createwallet WALLET_1
-**createwallet WALLET_2
-**createwallet WALLET_3
+**createwallet 1AmVdDvvQ977oVCpUqz7zAPUEiXKrX5avR
+**createwallet 1NE86r4Esjf53EL7fR86CsfTZpNN42Sfab
+**createwallet 12DkLzLQ4B3gnQt62EPRJGZ38n3zF4Hzt5
 **sleep 60000
 **startnode normal
-**getbalance WALLET_1
-**getbalance WALLET_2
-**getbalance CENTREAL_NODE
-**send WALLET_1 WALLET_3 1
-**send WALLET_2 WALLET_3 1
+**getbalance 1AmVdDvvQ977oVCpUqz7zAPUEiXKrX5avR
+**getbalance 1NE86r4Esjf53EL7fR86CsfTZpNN42Sfab
+**getbalance 1JnMDSqVoHi4TEFXNw5wJ8skPsPf4LHkQ1
+**send 1AmVdDvvQ977oVCpUqz7zAPUEiXKrX5avR 12DkLzLQ4B3gnQt62EPRJGZ38n3zF4Hzt5 1
+**send 1NE86r4Esjf53EL7fR86CsfTZpNN42Sfab 12DkLzLQ4B3gnQt62EPRJGZ38n3zF4Hzt5 1
 **sleep 60000
 **startnode normal
-**getbalance WALLET_1
-**getbalance WALLET_2
-**getbalance WALLET_3
-**getbalance MINER_WALLET
+**getbalance 1AmVdDvvQ977oVCpUqz7zAPUEiXKrX5avR
+**getbalance 1NE86r4Esjf53EL7fR86CsfTZpNN42Sfab
+**getbalance 12DkLzLQ4B3gnQt62EPRJGZ38n3zF4Hzt5
+**getbalance 12ncZhA5mFTTnTmHq1aTPYBri4jAK8TacL

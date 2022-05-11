@@ -1,5 +1,7 @@
-**createblockchain CENTREAL_NODE
+**createwallet 1JnMDSqVoHi4TEFXNw5wJ8skPsPf4LHkQ1
+**createblockchain 1JnMDSqVoHi4TEFXNw5wJ8skPsPf4LHkQ1
+**startnode normal
 **sleep 60000
-**send CENTREAL_NODE WALLET_1 10 mine
-**send CENTREAL_NODE WALLET_2 5 mine
+**send 1JnMDSqVoHi4TEFXNw5wJ8skPsPf4LHkQ1 1AmVdDvvQ977oVCpUqz7zAPUEiXKrX5avR 10 mine
+**send 1JnMDSqVoHi4TEFXNw5wJ8skPsPf4LHkQ1 1NE86r4Esjf53EL7fR86CsfTZpNN42Sfab 5 mine
 **startnode normal

@@ -1,1 +1,2 @@
-**startnode miner MINER_WALLET
+**createwallet 12ncZhA5mFTTnTmHq1aTPYBri4jAK8TacL
+**startnode miner 12ncZhA5mFTTnTmHq1aTPYBri4jAK8TacL
