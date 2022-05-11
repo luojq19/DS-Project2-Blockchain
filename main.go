@@ -1,20 +1,34 @@
 package main
 
 import (
-	"fmt"
-	"blockchain/blockchain"
+	"errors"
+	"bufio"
+	"os"
 )
 
+func input() (*CLI, *os.File){
+	if len(os.Args) < 3{
+		panic(errors.New("Wrong number of arguments."))
+	}
+	cli := &CLI{nodeID = os.Args[1],}
+	workload := os.Args[2]
+
+	file, err := os.Open(workload)
+	if err != nil {
+		panic(err)
+	}
+
+	return cli, file
+}
+
 func main() {
-	fmt.Println("Hello, playground")
 
-	bc := blockchain.CreateBlockchain(5)
-	bc.AddBlock("A", "B", 100)
-	bc.AddBlock("B", "C", 200)
+	cli, file := input()
+	defer file.Close()
+	
+	scanner := bufio.NewScanner(file)
 
-	for _, block := range bc.Chain {
-		fmt.Println(block.Timestamp)
-		fmt.Printf("Previous hash: %x\n", block.PreviousHash)
-		fmt.Printf("Hash: %x\n", block.Hash)
+	for scanner.Scan(){
+		cli.Atomic(scanner.Text())
 	}
 }

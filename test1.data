@@ -1,0 +1,16 @@
+**createwallet WALLET_1
+**createwallet WALLET_2
+**createwallet WALLET_3
+**sleep 60000
+**startnode normal
+**getbalance WALLET_1
+**getbalance WALLET_2
+**getbalance CENTREAL_NODE
+**send WALLET_1 WALLET_3 1
+**send WALLET_2 WALLET_3 1
+**sleep 60000
+**startnode normal
+**getbalance WALLET_1
+**getbalance WALLET_2
+**getbalance WALLET_3
+**getbalance MINER_WALLET

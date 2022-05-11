@@ -1,0 +1,5 @@
+**createblockchain CENTREAL_NODE
+**sleep 60000
+**send CENTREAL_NODE WALLET_1 10 mine
+**send CENTREAL_NODE WALLET_2 5 mine
+**startnode normal
