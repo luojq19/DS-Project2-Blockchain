@@ -1,23 +1,21 @@
 package main
 
 import (
-	"bytes"
-	"encoding/gob"
-	"log"
 	"time"
 )
 
+// Block keeps block headers
 type Block struct {
 	Timestamp     int64
-	Transactions  []*Transaction
+	Data          []byte
 	PrevBlockHash []byte
 	Hash          []byte
 	Nonce         int
-	Height        int
 }
 
-func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int) *Block {
-	block := &Block{time.Now().Unix(), transactions, prevBlockHash, []byte{}, 0, height}
+// NewBlock creates and returns Block
+func NewBlock(data string, prevBlockHash []byte) *Block {
+	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}, 0}
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
 
@@ -25,4 +23,9 @@ func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int) *Bl
 	block.Nonce = nonce
 
 	return block
+}
+
+// NewGenesisBlock creates and returns genesis Block
+func NewGenesisBlock() *Block {
+	return NewBlock("Genesis Block", []byte{})
 }
