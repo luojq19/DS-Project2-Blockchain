@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/gob"
-	"log"
 	"time"
 )
 
@@ -30,11 +29,12 @@ func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int, dif
 	return block
 }
 
-// NewGenesisBlock creates and returns genesis Block
+// create and returns genesis Block
 func NewGenesisBlock(Coinbase *Transaction, difficulty int64) *Block {
 	return NewBlock([]*Transaction{Coinbase}, []byte{}, 0, difficulty)
 }
 
+// compute the hash of the transactions and return the root of the Merkle tree
 func (b *Block) HashTransactions() []byte {
 	var transactions [][]byte
 
@@ -46,27 +46,24 @@ func (b *Block) HashTransactions() []byte {
 	return temp.RootNode.Data
 }
 
+// serialize the block for data transforming
 func (b *Block) Serialize() []byte {
 	var result bytes.Buffer
 	encoder := gob.NewEncoder(&result)
 
 	err := encoder.Encode(b)
-	if err != nil {
-		log.Panic(err)
-	}
+	printError(err)
 
 	return result.Bytes()
 }
 
-// DeserializeBlock deserializes a block
+// deserilize the block, as a reverse of serilization
 func DeserializeBlock(d []byte) *Block {
 	var block Block
 
 	decoder := gob.NewDecoder(bytes.NewReader(d))
 	err := decoder.Decode(&block)
-	if err != nil {
-		log.Panic(err)
-	}
+	printError(err)
 
 	return &block
 }

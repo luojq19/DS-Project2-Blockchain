@@ -12,37 +12,41 @@ import (
 	"github.com/boltdb/bolt"
 )
 
+const defultDifficulty = 20
+
+//const knownDb = "blockchain.db"
+
 const dbFile = "blockchain_%s.db"
 const blocksBucket = "blocks"
-const genesisCoinbaseData = "The Times 03/Jan/2009 Chancellor on brink of second bailout for banks"
+const genesisCoinbaseData = "This is the coinbase data for Genesis Block. "
 
-// Blockchain implements interactions with a DB
 type Blockchain struct {
-	tip []byte
-	db  *bolt.DB
+	genesisHash []byte
+	db          *bolt.DB
 }
 
 func getDifficulty(difficultyList ...int64) int64 {
 	var difficulty int64
-	difficulty = 24
+	difficulty = defultDifficulty
 	for _, num := range difficultyList {
 		difficulty = num
 	}
 	return difficulty
 }
 
-// CreateBlockchain creates a new blockchain DB
+// create a new blockchain and save it in the knownDb since we suppose everyone knows it
 func CreateBlockchain(address, nodeID string, difficultyList ...int64) *Blockchain {
 
 	difficulty := getDifficulty(difficultyList...)
 
 	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists(dbFile) {
+		//if dbExists(knownDb) {
 		fmt.Println("Blockchain already exists.")
 		os.Exit(1)
 	}
 
-	var tip []byte
+	var genesisHash []byte
 
 	cbtx := NewCoinbaseTX(address, genesisCoinbaseData)
 	genesis := NewGenesisBlock(cbtx, difficulty)
@@ -60,13 +64,13 @@ func CreateBlockchain(address, nodeID string, difficultyList ...int64) *Blockcha
 		err = b.Put([]byte("l"), genesis.Hash)
 		printError(err)
 
-		tip = genesis.Hash
+		genesisHash = genesis.Hash
 
 		return nil
 	})
 	printError(err)
 
-	bc := Blockchain{tip, db}
+	bc := Blockchain{genesisHash, db}
 
 	return &bc
 }
@@ -74,32 +78,32 @@ func CreateBlockchain(address, nodeID string, difficultyList ...int64) *Blockcha
 // NewBlockchain creates a new Blockchain with genesis Block
 func NewBlockchain(nodeID string) *Blockchain {
 	dbFile := fmt.Sprintf(dbFile, nodeID)
-	if dbExists(dbFile) == false {
+	if !dbExists(dbFile) {
+		//if !dbExists(knownDb) {
 		fmt.Println("No existing blockchain found. Create one first.")
 		os.Exit(1)
 	}
 
-	var tip []byte
+	var genesisHash []byte
+	//db, err := bolt.Open(dbFile, 0600, nil)
 	db, err := bolt.Open(dbFile, 0600, nil)
 	printError(err)
 
 	err = db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		tip = b.Get([]byte("l"))
+		genesisHash = b.Get([]byte("l"))
 
 		return nil
 	})
-	if err != nil {
-		log.Panic(err)
-	}
 
-	bc := Blockchain{tip, db}
+	printError(err)
+	bc := Blockchain{genesisHash, db}
 
 	return &bc
 }
 
 // AddBlock saves the block into the blockchain
-func (bc *Blockchain) AddBlock(block *Block, difficultyList ...int64) {
+func (bc *Blockchain) AddBlock(block *Block) {
 	err := bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		blockInDb := b.Get(block.Hash)
@@ -119,14 +123,12 @@ func (bc *Blockchain) AddBlock(block *Block, difficultyList ...int64) {
 		if block.Height > lastBlock.Height {
 			err = b.Put([]byte("l"), block.Hash)
 			printError(err)
-			bc.tip = block.Hash
+			bc.genesisHash = block.Hash
 		}
 
 		return nil
 	})
-	if err != nil {
-		log.Panic(err)
-	}
+	printError(err)
 }
 
 // FindTransaction finds a transaction by its ID
@@ -137,7 +139,7 @@ func (bc *Blockchain) FindTransaction(ID []byte) (Transaction, error) {
 		block := bci.Next()
 
 		for _, tx := range block.Transactions {
-			if bytes.Compare(tx.ID, ID) == 0 {
+			if bytes.Equal(tx.ID, ID) {
 				return *tx, nil
 			}
 		}
@@ -178,7 +180,7 @@ func (bc *Blockchain) FindUTXO() map[string]TXOutputs {
 				UTXO[txID] = outs
 			}
 
-			if tx.IsCoinbase() == false {
+			if !tx.IsCoinbase() {
 				for _, in := range tx.Vin {
 					inTxID := hex.EncodeToString(in.Txid)
 					spentTXOs[inTxID] = append(spentTXOs[inTxID], in.Vout)
@@ -196,7 +198,7 @@ func (bc *Blockchain) FindUTXO() map[string]TXOutputs {
 
 // Iterator returns a BlockchainIterat
 func (bc *Blockchain) Iterator() *BlockchainIterator {
-	bci := &BlockchainIterator{bc.tip, bc.db}
+	bci := &BlockchainIterator{bc.genesisHash, bc.db}
 
 	return bci
 }
@@ -230,7 +232,7 @@ func (bc *Blockchain) GetBlock(blockHash []byte) (Block, error) {
 		blockData := b.Get(blockHash)
 
 		if blockData == nil {
-			return errors.New("Block is not found.")
+			return errors.New("Block is not found. ")
 		}
 
 		block = *DeserializeBlock(blockData)
@@ -272,7 +274,7 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction, diffcultyList ...in
 
 	for _, tx := range transactions {
 		// TODO: ignore transaction if it's not valid
-		if bc.VerifyTransaction(tx) != true {
+		if !bc.VerifyTransaction(tx) {
 			log.Panic("ERROR: Invalid transaction")
 		}
 	}
@@ -288,9 +290,7 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction, diffcultyList ...in
 
 		return nil
 	})
-	if err != nil {
-		log.Panic(err)
-	}
+	printError(err)
 
 	newBlock := NewBlock(transactions, lastHash, lastHeight+1, difficulty)
 
@@ -302,11 +302,8 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction, diffcultyList ...in
 		}
 
 		err = b.Put([]byte("l"), newBlock.Hash)
-		if err != nil {
-			log.Panic(err)
-		}
-
-		bc.tip = newBlock.Hash
+		printError(err)
+		bc.genesisHash = newBlock.Hash
 
 		return nil
 	})
@@ -365,7 +362,7 @@ type BlockchainIterator struct {
 	db          *bolt.DB
 }
 
-// Next returns next block starting from the tip
+// Next returns next block starting from the genesisHash
 func (i *BlockchainIterator) Next() *Block {
 	var block *Block
 
