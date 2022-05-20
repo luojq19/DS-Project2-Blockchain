@@ -207,9 +207,7 @@ func NewUTXOTransaction(wallet *Wallet, to string, amount int, UTXOSet *UTXOSet)
 	// Build a list of inputs
 	for txid, outs := range valid_output {
 		txID, err := hex.DecodeString(txid)
-		if err != nil {
-			log.Panic(err)
-		}
+		printError(err)
 
 		for _, out := range outs {
 			input := TXInput{txID, out, nil, wallet.PublicKey}
@@ -237,9 +235,7 @@ func DeserializeTransaction(data []byte) Transaction {
 
 	decoder := gob.NewDecoder(bytes.NewReader(data))
 	err := decoder.Decode(&transaction)
-	if err != nil {
-		log.Panic(err)
-	}
+	printError(err)
 
 	return transaction
 }
@@ -288,9 +284,7 @@ func (outs TXOutputs) Serialize() []byte {
 
 	enc := gob.NewEncoder(&buff)
 	err := enc.Encode(outs)
-	if err != nil {
-		log.Panic(err)
-	}
+	printError(err)
 
 	return buff.Bytes()
 }
@@ -300,10 +294,7 @@ func DeserializeOutputs(data []byte) TXOutputs {
 
 	dec := gob.NewDecoder(bytes.NewReader(data))
 	err := dec.Decode(&outputs)
-	if err != nil {
-		log.Panic(err)
-	}
+	printError(err)
 
 	return outputs
 }
-

@@ -12,7 +12,7 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-const defultDifficulty = 20
+const defultDifficulty = 24
 
 //const knownDb = "blockchain.db"
 
@@ -32,6 +32,14 @@ func getDifficulty(difficultyList ...int64) int64 {
 		difficulty = num
 	}
 	return difficulty
+}
+
+func dbExists(dbFile string) bool {
+	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
+		return false
+	}
+
+	return true
 }
 
 // create a new blockchain and save it in the knownDb since we suppose everyone knows it
@@ -71,11 +79,10 @@ func CreateBlockchain(address, nodeID string, difficultyList ...int64) *Blockcha
 	printError(err)
 
 	bc := Blockchain{genesisHash, db}
-
 	return &bc
 }
 
-// NewBlockchain creates a new Blockchain with genesis Block
+// create a new Blockchain with genesis Block
 func NewBlockchain(nodeID string) *Blockchain {
 	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if !dbExists(dbFile) {
@@ -131,19 +138,17 @@ func (bc *Blockchain) AddBlock(block *Block) {
 	printError(err)
 }
 
-// FindTransaction finds a transaction by its ID
+// Find a transaction by its ID
 func (bc *Blockchain) FindTransaction(ID []byte) (Transaction, error) {
 	bci := bc.Iterator()
 
 	for {
 		block := bci.Next()
-
 		for _, tx := range block.Transactions {
 			if bytes.Equal(tx.ID, ID) {
 				return *tx, nil
 			}
 		}
-
 		if len(block.PrevBlockHash) == 0 {
 			break
 		}
@@ -152,7 +157,7 @@ func (bc *Blockchain) FindTransaction(ID []byte) (Transaction, error) {
 	return Transaction{}, errors.New("Transaction is not found")
 }
 
-// FindUTXO finds all unspent transaction outputs and returns transactions with spent outputs removed
+// Find all unspent transaction outputs and returns transactions with spent outputs removed
 func (bc *Blockchain) FindUTXO() map[string]TXOutputs {
 	UTXO := make(map[string]TXOutputs)
 	spentTXOs := make(map[string][]int)
@@ -196,14 +201,38 @@ func (bc *Blockchain) FindUTXO() map[string]TXOutputs {
 	return UTXO
 }
 
-// Iterator returns a BlockchainIterat
+// BlockchainIterator is used to iterate over blockchain blocks
+type BlockchainIterator struct {
+	currentHash []byte
+	db          *bolt.DB
+}
+
+// Get the next block starting from the genesisHash
+func (i *BlockchainIterator) Next() *Block {
+	var block *Block
+
+	err := i.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(blocksBucket))
+		encodedBlock := b.Get(i.currentHash)
+		block = DeserializeBlock(encodedBlock)
+
+		return nil
+	})
+
+	printError(err)
+	i.currentHash = block.PrevBlockHash
+
+	return block
+}
+
+// create a blockchain iterator
 func (bc *Blockchain) Iterator() *BlockchainIterator {
 	bci := &BlockchainIterator{bc.genesisHash, bc.db}
 
 	return bci
 }
 
-// GetBestHeight returns the height of the latest block
+// get the height of the latest block
 func (bc *Blockchain) GetBestHeight() int {
 	var lastBlock Block
 
@@ -222,23 +251,21 @@ func (bc *Blockchain) GetBestHeight() int {
 	return lastBlock.Height
 }
 
-// GetBlock finds a block by its hash and returns it
+// find a block by its hash and returns it
 func (bc *Blockchain) GetBlock(blockHash []byte) (Block, error) {
 	var block Block
 
 	err := bc.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-
-		blockData := b.Get(blockHash)
-
-		if blockData == nil {
-			return errors.New("Block is not found. ")
+		foundBlock := b.Get(blockHash)
+		if foundBlock == nil {
+			return errors.New("Block is not found in the blockchain. ")
 		}
 
-		block = *DeserializeBlock(blockData)
-
+		block = *DeserializeBlock(foundBlock)
 		return nil
 	})
+
 	if err != nil {
 		return block, err
 	}
@@ -246,14 +273,13 @@ func (bc *Blockchain) GetBlock(blockHash []byte) (Block, error) {
 	return block, nil
 }
 
-// GetBlockHashes returns a list of hashes of all the blocks in the chain
+// get a list of hashes of all the blocks in the chain
 func (bc *Blockchain) GetBlockHashes() [][]byte {
 	var blocks [][]byte
 	bci := bc.Iterator()
 
 	for {
 		block := bci.Next()
-
 		blocks = append(blocks, block.Hash)
 
 		if len(block.PrevBlockHash) == 0 {
@@ -264,7 +290,7 @@ func (bc *Blockchain) GetBlockHashes() [][]byte {
 	return blocks
 }
 
-// MineBlock mines a new block with the provided transactions
+//mine a new block with the provided transactions
 func (bc *Blockchain) MineBlock(transactions []*Transaction, diffcultyList ...int64) *Block {
 
 	difficulty := getDifficulty(diffcultyList...)
@@ -273,7 +299,6 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction, diffcultyList ...in
 	var lastHeight int
 
 	for _, tx := range transactions {
-		// TODO: ignore transaction if it's not valid
 		if !bc.VerifyTransaction(tx) {
 			log.Panic("ERROR: Invalid transaction")
 		}
@@ -283,8 +308,8 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction, diffcultyList ...in
 		b := tx.Bucket([]byte(blocksBucket))
 		lastHash = b.Get([]byte("l"))
 
-		blockData := b.Get(lastHash)
-		block := DeserializeBlock(blockData)
+		foundBlock := b.Get(lastHash)
+		block := DeserializeBlock(foundBlock)
 
 		lastHeight = block.Height
 
@@ -297,9 +322,7 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction, diffcultyList ...in
 	err = bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		err := b.Put(newBlock.Hash, newBlock.Serialize())
-		if err != nil {
-			log.Panic(err)
-		}
+		printError(err)
 
 		err = b.Put([]byte("l"), newBlock.Hash)
 		printError(err)
@@ -307,22 +330,18 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction, diffcultyList ...in
 
 		return nil
 	})
-	if err != nil {
-		log.Panic(err)
-	}
+	printError(err)
 
 	return newBlock
 }
 
-// SignTransaction signs inputs of a Transaction
+// sign the inputs of a Transaction
 func (bc *Blockchain) SignTransaction(tx *Transaction, privKey ecdsa.PrivateKey) {
 	prevTXs := make(map[string]Transaction)
 
 	for _, vin := range tx.Vin {
 		prevTX, err := bc.FindTransaction(vin.Txid)
-		if err != nil {
-			log.Panic(err)
-		}
+		printError(err)
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
 
@@ -339,46 +358,9 @@ func (bc *Blockchain) VerifyTransaction(tx *Transaction) bool {
 
 	for _, vin := range tx.Vin {
 		prevTX, err := bc.FindTransaction(vin.Txid)
-		if err != nil {
-			log.Panic(err)
-		}
+		printError(err)
 		prevTXs[hex.EncodeToString(prevTX.ID)] = prevTX
 	}
 
 	return tx.Verify(prevTXs)
-}
-
-func dbExists(dbFile string) bool {
-	if _, err := os.Stat(dbFile); os.IsNotExist(err) {
-		return false
-	}
-
-	return true
-}
-
-// BlockchainIterator is used to iterate over blockchain blocks
-type BlockchainIterator struct {
-	currentHash []byte
-	db          *bolt.DB
-}
-
-// Next returns next block starting from the genesisHash
-func (i *BlockchainIterator) Next() *Block {
-	var block *Block
-
-	err := i.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blocksBucket))
-		encodedBlock := b.Get(i.currentHash)
-		block = DeserializeBlock(encodedBlock)
-
-		return nil
-	})
-
-	if err != nil {
-		log.Panic(err)
-	}
-
-	i.currentHash = block.PrevBlockHash
-
-	return block
 }

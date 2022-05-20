@@ -50,9 +50,9 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 		// compute the hash result and check
 		hash = sha256.Sum256(data)
-		if math.Remainder(float64(nonce), printInterval) == 0 {
-			fmt.Printf("\rCurrent trying: %x", hash)
-		}
+		//if math.Remainder(float64(nonce), printInterval) == 0 {
+		//fmt.Printf("\rCurrent trying: %x", hash)
+		//}
 		hashInt.SetBytes(hash[:])
 		// transform the comparasion of bits to comparision of big ints
 		// may be much slower than byte comparasion
