@@ -12,7 +12,7 @@ import (
 	"github.com/boltdb/bolt"
 )
 
-const defultDifficulty = 24
+const defultDifficulty = 20
 
 //const knownDb = "blockchain.db"
 

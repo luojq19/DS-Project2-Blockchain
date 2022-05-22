@@ -1,0 +1,1 @@
+rm address_* blockchain_* wallet_*
