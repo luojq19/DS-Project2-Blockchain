@@ -1,0 +1,50 @@
+first_node: 18SL6dTaPk3TKRjBsAV1vS6PpphCemAS9g
+
+# client1:
+wallet1: 1Nv1WNNmizevQE6YFvqUWxz3Yt3iLwJeo7
+wallet2: 1G1XfSuXuhaxDYnSHkb1GtizxXae7kA89S
+
+# client2:
+wallet3: 
+
+miner1: 
+mined_block: 
+
+miner2: 1HMxLAyAdxDNtHCuM4pQeYvBE5oGF2UB3E
+mined_block: 
+
+first node: 
+    ./blockchain createwallet
+    ./blockchain createblockchain -address first_node
+    ./cp.sh
+client1:
+    ./blockchain createwallet
+    ./blockchain createwallet
+first node:
+    ./blockchain send -from first_node -to wallet1 -amount 9 -mine
+    ./blockchain send -from first_node -to wallet2 -amount 8 -mine
+    ./blockchain send -from first_node -to wallet3 -amount 7 -mine
+    ./blockchain startnode
+client1:
+    ./blockchain startnode
+    ./blockchain getbalance -address first_node
+    ./blockchain getbalance -address wallet1
+    ./blockchain getbalance -address wallet2
+client2:
+    ./blockchain startnode
+    ./blockchain getbalance -address wallet3
+miner1:
+    ./blockchain createwallet
+    ./blockchain startnode -miner miner1
+miner2:
+    ./blockchain createwallet
+    ./blockchain startnode -miner miner2
+client1:
+    ./blockchain send -from wallet1 -to wallet2 -amount 1
+    ./blockchain send -from wallet1 -to wallet3 -amount 2
+    ./blockchain send -from wallet2 -to wallet3 -amount 3
+    ./blockchain getbalance wallet3
+    ./blockchain printchain
+client2:
+    ./blockchain startnode
+    ./blockchain printchain
