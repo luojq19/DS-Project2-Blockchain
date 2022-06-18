@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math"
-	"math/big"
 	"time"
 )
 
@@ -13,18 +12,15 @@ var (
 	maxNonce = math.MaxInt64
 )
 
-const targetBits = 16
-
 // ProofOfWork represents a proof-of-work
 type ProofOfWork struct {
 	block  *Block
-	target *big.Int
+	target uint8
 }
 
 // NewProofOfWork builds and returns a ProofOfWork
 func NewProofOfWork(b *Block) *ProofOfWork {
-	target := big.NewInt(1)
-	target.Lsh(target, uint(256-targetBits))
+	target := b.Difficulty
 
 	pow := &ProofOfWork{b, target}
 
@@ -37,7 +33,7 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 			pow.block.PrevBlockHash,
 			pow.block.HashTransactions(),
 			IntToHex(pow.block.Timestamp),
-			IntToHex(int64(targetBits)),
+			IntToHex(int64(pow.block.Difficulty)),
 			IntToHex(int64(nonce)),
 		},
 		[]byte{},
@@ -48,7 +44,6 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 
 // Run performs a proof-of-work
 func (pow *ProofOfWork) Run() (int, []byte) {
-	var hashInt big.Int
 	var hash [32]byte
 	nonce := 0
 
@@ -59,10 +54,10 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 		data := pow.prepareData(nonce)
 
 		hash = sha256.Sum256(data)
-		fmt.Printf("\r%x", hash)
-		hashInt.SetBytes(hash[:])
 
-		if hashInt.Cmp(pow.target) == -1 {
+		fmt.Printf("\r Current Try: %x", hash)
+
+		if HasValidHash(hash, pow.block.Difficulty) {
 			break
 		} else {
 			nonce++
@@ -76,6 +71,7 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 	fmt.Printf("\rCurrent Try: %x, Total time: %d ms", hash, total)
 	
+
 	fmt.Print("\n\n")
 
 	return nonce, hash[:]
@@ -83,13 +79,29 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 // Validate validates block's PoW
 func (pow *ProofOfWork) Validate() bool {
-	var hashInt big.Int
 
 	data := pow.prepareData(pow.block.Nonce)
 	hash := sha256.Sum256(data)
-	hashInt.SetBytes(hash[:])
 
-	isValid := hashInt.Cmp(pow.target) == -1
+	return HasValidHash(hash, pow.block.Difficulty)
+}
 
-	return isValid
+// Whether the hash is valdi undercurrent difficulty
+func HasValidHash(hash [32]byte, diff uint8) bool {
+	var temp1, temp2 uint8
+	temp1 = (diff - diff%8) / 8
+	temp2 = diff % 8
+	var i uint8
+	for i = 0; i < temp1; i++ {
+		if hash[i] != 0 {
+			return false
+		}
+	}
+	if temp2 != 0 {
+		if hash[temp1]>>(8-temp2) != 0 {
+			return false
+		}
+	}
+
+	return true
 }
