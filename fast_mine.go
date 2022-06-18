@@ -79,6 +79,6 @@ func main() {
 	for i := 0; i < 10; i++ {
 		total2 += int(mine_once(false))
 	}
-	fmt.Printf("Slow mine 10 blocks: average time: %d ms\n", total1/1000000/10)
-	fmt.Printf("Fast mine 10 blocks: average time: %d ms\n", total2/1000000/10)
+	fmt.Printf("Fast mine 10 blocks: average time: %d ms\n", total1/1000000/10)
+	fmt.Printf("Slow mine 10 blocks: average time: %d ms\n", total2/1000000/10)
 }
