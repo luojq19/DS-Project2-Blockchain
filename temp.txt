@@ -1,16 +1,16 @@
-first_node: 18SL6dTaPk3TKRjBsAV1vS6PpphCemAS9g
+first_node: 19R7SGZaHTYnkw1CYPW8RAtmqGnaCKd6gG
 
 # client1:
-wallet1: 1Nv1WNNmizevQE6YFvqUWxz3Yt3iLwJeo7
-wallet2: 1G1XfSuXuhaxDYnSHkb1GtizxXae7kA89S
+wallet1: 1M597pDbR9jkfT5r4JR13kTtG7bMf4w69N
+wallet2: 1Bsnm9Lt57xo9XFF3ZzCvV2w4KKMUGTegJ
 
 # client2:
 wallet3: 
 
-miner1: 
+miner1: 1CdT4tskQNzzTuJHBnp6uU4WuZbRRYGb6z
 mined_block: 
 
-miner2: 1HMxLAyAdxDNtHCuM4pQeYvBE5oGF2UB3E
+miner2: 
 mined_block: 
 
 first node: 
