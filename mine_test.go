@@ -1,9 +1,16 @@
 package main
 
+import (
+	"crypto/sha256"
+	"fmt"
+	"math/big"
+	"time"
+)
+
 func mine_once(flag bool) int64 {
 	start := time.Now().UnixNano()
 	tx := NewCoinbaseTX("test", "test")
-	block := NewGenesisBlock(tx)
+	block := NewGenesisBlock(tx, 16)
 	pow := NewProofOfWork(block)
 
 	if flag {
@@ -18,7 +25,7 @@ func mine_once(flag bool) int64 {
 
 			fmt.Printf("\r Current Try: %x", hash)
 
-			if HasValidHash(hash, pow.block.Difficulty) {
+			if HasValidHash(hash, 16) {
 				fmt.Printf("\r Current Try: %x", hash)
 				break
 			} else {
@@ -29,7 +36,7 @@ func mine_once(flag bool) int64 {
 		fmt.Print("\n\n")
 	} else {
 		target := big.NewInt(1)
-		target = target.Lsh(target, uint(256-pow.block.Difficulty))
+		target = target.Lsh(target, uint(256-16))
 
 		var hashInt big.Int
 		var hash [32]byte
@@ -41,9 +48,7 @@ func mine_once(flag bool) int64 {
 			data := pow.prepareData(nonce)
 
 			hash = sha256.Sum256(data)
-			if math.Remainder(float64(nonce), printInterval) == 0 {
-				fmt.Printf("\rCurrent trying: %x", hash)
-			}
+			fmt.Printf("\r Current Try: %x", hash)
 			hashInt.SetBytes(hash[:])
 
 			if hashInt.Cmp(target) == -1 {
@@ -58,6 +63,6 @@ func mine_once(flag bool) int64 {
 
 	end := time.Now().UnixNano()
 
-	total := end - begin
+	total := end - start
 	return total
 }
