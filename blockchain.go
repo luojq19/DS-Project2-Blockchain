@@ -308,8 +308,8 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction, difflist ...uint8) 
 		log.Panic(err)
 	}
 
-	if lastHeight%10 == 0 {
-		diff = lastDiff + 8
+	if lastHeight%2 == 0 {
+		diff = lastDiff + 4
 	} else {
 		diff = lastDiff
 	}
