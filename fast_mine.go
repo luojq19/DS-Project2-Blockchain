@@ -8,7 +8,8 @@ import (
 )
 
 func mine_once(flag bool) int64 {
-	start := time.Now().UnixNano()
+	var start, end int64
+
 	from := "aliceasdfasdfasdf"
 	to := "boaasdfasfasdfasdfb"
 	tx := NewCoinbaseTX(from, to)
@@ -16,16 +17,18 @@ func mine_once(flag bool) int64 {
 	pow := NewProofOfWork(block)
 
 	if flag {
+		start = time.Now().UnixNano()
 		var hash [32]byte
 		nonce := 0
 
 		fmt.Printf("Mining a new block")
+
 		for nonce < maxNonce {
 			data := pow.prepareData(nonce)
 
 			hash = sha256.Sum256(data)
 
-			fmt.Printf("\r Current Try: %x", hash)
+			//fmt.Printf("\r Current Try: %x", hash)
 
 			if HasValidHash(hash, 16) {
 				break
@@ -33,9 +36,10 @@ func mine_once(flag bool) int64 {
 				nonce++
 			}
 		}
-
+		end = time.Now().UnixNano()
 		fmt.Print("\n\n")
 	} else {
+		start = time.Now().UnixNano()
 		target := big.NewInt(1)
 		target = target.Lsh(target, uint(256-16))
 
@@ -49,7 +53,7 @@ func mine_once(flag bool) int64 {
 			data := pow.prepareData(nonce)
 
 			hash = sha256.Sum256(data)
-			fmt.Printf("\r Current Try: %x", hash)
+			//fmt.Printf("\r Current Try: %x", hash)
 			hashInt.SetBytes(hash[:])
 
 			if hashInt.Cmp(target) == -1 {
@@ -58,24 +62,23 @@ func mine_once(flag bool) int64 {
 				nonce++
 			}
 		}
+		end = time.Now().UnixNano()
 		fmt.Print("\n\n")
 	}
-
-	end := time.Now().UnixNano()
 
 	total := end - start
 	return total
 }
 
-// func main() {
-// 	total1 := 0
-// 	for i := 0; i < 10; i++ {
-// 		total1 += int(mine_once(true))
-// 	}
-// 	total2 := 0
-// 	for i := 0; i < 10; i++ {
-// 		total2 += int(mine_once(false))
-// 	}
-// 	fmt.Printf("Slow mine 10 blocks: average time: %d ms\n", total1/1000000/10)
-// 	fmt.Printf("Fast mine 10 blocks: average time: %d ms\n", total2/1000000/10)
-// }
+func main() {
+	total1 := 0
+	for i := 0; i < 10; i++ {
+		total1 += int(mine_once(true))
+	}
+	total2 := 0
+	for i := 0; i < 10; i++ {
+		total2 += int(mine_once(false))
+	}
+	fmt.Printf("Slow mine 10 blocks: average time: %d ms\n", total1/1000000/10)
+	fmt.Printf("Fast mine 10 blocks: average time: %d ms\n", total2/1000000/10)
+}
