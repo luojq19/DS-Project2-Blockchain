@@ -24,7 +24,7 @@ type Blockchain struct {
 
 func getDifficulty(difficultyList ...uint8) uint8 {
 	var difficulty uint8
-	difficulty = 12
+	difficulty = 1
 	for _, num := range difficultyList {
 		difficulty = num
 	}
