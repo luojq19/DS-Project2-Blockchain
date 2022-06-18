@@ -1,4 +1,4 @@
-package main
+package main -buildvcs = false
 
 import (
 	"bytes"
@@ -12,6 +12,7 @@ var (
 	maxNonce = math.MaxInt64
 )
 
+const initialDifficulty = 16
 const targetBits = 16
 
 // ProofOfWork represents a proof-of-work
@@ -72,13 +73,25 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 
 // Validate validates block's PoW
 func (pow *ProofOfWork) Validate() bool {
-	var hashInt big.Int
 
 	data := pow.prepareData(pow.block.Nonce)
 	hash := sha256.Sum256(data)
-	hashInt.SetBytes(hash[:])
 
-	isValid := hashInt.Cmp(pow.target) == -1
+	return HasValidHash(hash, targetBits)
+}
 
-	return isValid
+// Whether the hash is valdi undercurrent difficulty
+func HasValidHash(hash [32]byte, diff int) bool {
+	temp1 := diff >> 3
+	temp2 := diff & 7
+	for i := 0; i < temp1; i++ {
+		if hash[0] != 0 {
+			return false
+		}
+	}
+	temp := hash[temp1] >> temp2
+	if temp != 0 {
+		return false
+	}
+	return true
 }
