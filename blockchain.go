@@ -22,8 +22,19 @@ type Blockchain struct {
 	db  *bolt.DB
 }
 
+func getDifficulty(difficultyList ...uint8) uint8 {
+	var difficulty uint8
+	difficulty = 12
+	for _, num := range difficultyList {
+		difficulty = num
+	}
+	return difficulty
+}
+
 // CreateBlockchain creates a new blockchain DB
-func CreateBlockchain(address, nodeID string) *Blockchain {
+func CreateBlockchain(address, nodeID string, difflist ...uint8) *Blockchain {
+	diff := getDifficulty(difflist...)
+
 	dbFile := fmt.Sprintf(dbFile, nodeID)
 	if dbExists(dbFile) {
 		fmt.Println("Blockchain already exists.")
@@ -33,7 +44,7 @@ func CreateBlockchain(address, nodeID string) *Blockchain {
 	var tip []byte
 
 	cbtx := NewCoinbaseTX(address, genesisCoinbaseData)
-	genesis := NewGenesisBlock(cbtx)
+	genesis := NewGenesisBlock(cbtx, diff)
 
 	db, err := bolt.Open(dbFile, 0600, nil)
 	if err != nil {
@@ -266,9 +277,12 @@ func (bc *Blockchain) GetBlockHashes() [][]byte {
 }
 
 // MineBlock mines a new block with the provided transactions
-func (bc *Blockchain) MineBlock(transactions []*Transaction) *Block {
+func (bc *Blockchain) MineBlock(transactions []*Transaction, difflist ...uint8) *Block {
+
+	diff := getDifficulty(difflist...)
 	var lastHash []byte
 	var lastHeight int
+	var lastDiff uint8
 
 	for _, tx := range transactions {
 		// TODO: ignore transaction if it's not valid
@@ -286,13 +300,21 @@ func (bc *Blockchain) MineBlock(transactions []*Transaction) *Block {
 
 		lastHeight = block.Height
 
+		lastDiff = block.Difficulty
+
 		return nil
 	})
 	if err != nil {
 		log.Panic(err)
 	}
 
-	newBlock := NewBlock(transactions, lastHash, lastHeight+1)
+	if lastHeight%10 == 0 {
+		diff = lastDiff + 8
+	} else {
+		diff = lastDiff
+	}
+
+	newBlock := NewBlock(transactions, lastHash, lastHeight+1, diff)
 
 	err = bc.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))

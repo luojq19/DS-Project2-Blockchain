@@ -15,11 +15,12 @@ type Block struct {
 	Hash          []byte
 	Nonce         int
 	Height        int
+	Difficulty    uint8
 }
 
 // NewBlock creates and returns Block
-func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int) *Block {
-	block := &Block{time.Now().Unix(), transactions, prevBlockHash, []byte{}, 0, height}
+func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int, diff uint8) *Block {
+	block := &Block{time.Now().Unix(), transactions, prevBlockHash, []byte{}, 0, height, diff}
 	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
 
@@ -30,8 +31,8 @@ func NewBlock(transactions []*Transaction, prevBlockHash []byte, height int) *Bl
 }
 
 // NewGenesisBlock creates and returns genesis Block
-func NewGenesisBlock(coinbase *Transaction) *Block {
-	return NewBlock([]*Transaction{coinbase}, []byte{}, 0)
+func NewGenesisBlock(coinbase *Transaction, diff uint8) *Block {
+	return NewBlock([]*Transaction{coinbase}, []byte{}, 0, diff)
 }
 
 // HashTransactions returns a hash of the transactions in the block

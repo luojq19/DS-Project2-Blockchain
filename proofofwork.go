@@ -1,30 +1,26 @@
-package main -buildvcs = false
+package main
 
 import (
 	"bytes"
 	"crypto/sha256"
 	"fmt"
 	"math"
-	"math/big"
+	"time"
 )
 
 var (
 	maxNonce = math.MaxInt64
 )
 
-const initialDifficulty = 16
-const targetBits = 16
-
 // ProofOfWork represents a proof-of-work
 type ProofOfWork struct {
 	block  *Block
-	target *big.Int
+	target uint8
 }
 
 // NewProofOfWork builds and returns a ProofOfWork
 func NewProofOfWork(b *Block) *ProofOfWork {
-	target := big.NewInt(1)
-	target.Lsh(target, uint(256-targetBits))
+	target := b.Difficulty
 
 	pow := &ProofOfWork{b, target}
 
@@ -37,7 +33,7 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 			pow.block.PrevBlockHash,
 			pow.block.HashTransactions(),
 			IntToHex(pow.block.Timestamp),
-			IntToHex(int64(targetBits)),
+			IntToHex(int64(pow.block.Difficulty)),
 			IntToHex(int64(nonce)),
 		},
 		[]byte{},
@@ -48,24 +44,32 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 
 // Run performs a proof-of-work
 func (pow *ProofOfWork) Run() (int, []byte) {
-	var hashInt big.Int
 	var hash [32]byte
 	nonce := 0
+
+	begintime := time.Now().UnixNano()
 
 	fmt.Printf("Mining a new block")
 	for nonce < maxNonce {
 		data := pow.prepareData(nonce)
 
 		hash = sha256.Sum256(data)
-		fmt.Printf("\r%x", hash)
-		hashInt.SetBytes(hash[:])
 
-		if hashInt.Cmp(pow.target) == -1 {
+		fmt.Printf("\r Current Try: %x", hash)
+
+		if HasValidHash(hash, pow.block.Difficulty) {
 			break
 		} else {
 			nonce++
 		}
 	}
+	endtime := time.Now().UnixNano()
+
+	total := endtime - begintime
+	total = total / 1000000
+
+	fmt.Printf("\rCurrent Try: %x, Total time: %d ms", hash, total)
+
 	fmt.Print("\n\n")
 
 	return nonce, hash[:]
@@ -77,20 +81,22 @@ func (pow *ProofOfWork) Validate() bool {
 	data := pow.prepareData(pow.block.Nonce)
 	hash := sha256.Sum256(data)
 
-	return HasValidHash(hash, targetBits)
+	return HasValidHash(hash, pow.block.Difficulty)
 }
 
 // Whether the hash is valdi undercurrent difficulty
-func HasValidHash(hash [32]byte, diff int) bool {
-	temp1 := diff >> 3
-	temp2 := diff & 7
-	for i := 0; i < temp1; i++ {
-		if hash[0] != 0 {
+func HasValidHash(hash [32]byte, diff uint8) bool {
+	var temp1, temp2 uint8
+	temp1 = (diff - diff%8) / 8
+	temp2 = diff % 8
+	var i uint8
+	for i = 0; i < temp1; i++ {
+		if hash[i] != 0 {
 			return false
 		}
 	}
-	temp := hash[temp1] >> temp2
-	if temp != 0 {
+
+	if hash[temp1]>>(8-temp2) != 0 {
 		return false
 	}
 	return true
