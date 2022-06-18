@@ -1,0 +1,63 @@
+package main
+
+func mine_once(flag bool) int64 {
+	start := time.Now().UnixNano()
+	tx := NewCoinbaseTX("test", "test")
+	block := NewGenesisBlock(tx)
+	pow := NewProofOfWork(block)
+
+	if flag {
+		var hash [32]byte
+		nonce := 0
+
+		fmt.Printf("Mining a new block")
+		for nonce < maxNonce {
+			data := pow.prepareData(nonce)
+
+			hash = sha256.Sum256(data)
+
+			fmt.Printf("\r Current Try: %x", hash)
+
+			if HasValidHash(hash, pow.block.Difficulty) {
+				fmt.Printf("\r Current Try: %x", hash)
+				break
+			} else {
+				nonce++
+			}
+		}
+
+		fmt.Print("\n\n")
+	} else {
+		target := big.NewInt(1)
+		target = target.Lsh(target, uint(256-pow.block.Difficulty))
+
+		var hashInt big.Int
+		var hash [32]byte
+		nonce := 0
+
+		fmt.Printf("Mining a new block")
+
+		for nonce < maxNonce {
+			data := pow.prepareData(nonce)
+
+			hash = sha256.Sum256(data)
+			if math.Remainder(float64(nonce), printInterval) == 0 {
+				fmt.Printf("\rCurrent trying: %x", hash)
+			}
+			hashInt.SetBytes(hash[:])
+
+			if hashInt.Cmp(target) == -1 {
+				fmt.Printf("\rCurrent trying: %x", hash)
+				break
+			} else {
+				nonce++
+			}
+		}
+		fmt.Print("\n\n")
+	}
+
+	end := time.Now().UnixNano()
+
+	total := end - begin
+	return total
+}
