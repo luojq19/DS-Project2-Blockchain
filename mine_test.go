@@ -26,7 +26,6 @@ func mine_once(flag bool) int64 {
 			fmt.Printf("\r Current Try: %x", hash)
 
 			if HasValidHash(hash, 16) {
-				fmt.Printf("\r Current Try: %x", hash)
 				break
 			} else {
 				nonce++
@@ -52,7 +51,6 @@ func mine_once(flag bool) int64 {
 			hashInt.SetBytes(hash[:])
 
 			if hashInt.Cmp(target) == -1 {
-				fmt.Printf("\rCurrent trying: %x", hash)
 				break
 			} else {
 				nonce++
