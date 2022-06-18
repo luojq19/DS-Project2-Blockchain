@@ -4,13 +4,14 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"math/big"
+	"strconv"
 	"time"
 )
 
 func mine_once(flag bool) int64 {
 	var start, end int64
 
-	from := "aliceasdfasdfasdf"
+	from := strconv.Itoa(int(time.Now().Unix()))
 	to := "boaasdfasfasdfasdfb"
 	tx := NewCoinbaseTX(from, to)
 	block := NewGenesisBlock(tx, 16)
