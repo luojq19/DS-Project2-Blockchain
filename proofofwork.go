@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"math/big"
+	"time"
 )
 
 var (
@@ -51,6 +52,8 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 	var hash [32]byte
 	nonce := 0
 
+	begintime := time.Now().UnixNano()
+
 	fmt.Printf("Mining a new block")
 	for nonce < maxNonce {
 		data := pow.prepareData(nonce)
@@ -65,6 +68,14 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 			nonce++
 		}
 	}
+
+	endtime := time.Now().UnixNano()
+
+	total := endtime - begintime
+	total = total / 1000000
+
+	fmt.Printf("\rCurrent Try: %x, Total time: %d ms", hash, total)
+	
 	fmt.Print("\n\n")
 
 	return nonce, hash[:]
