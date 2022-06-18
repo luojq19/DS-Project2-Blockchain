@@ -95,9 +95,11 @@ func HasValidHash(hash [32]byte, diff uint8) bool {
 			return false
 		}
 	}
-
-	if hash[temp1]>>(8-temp2) != 0 {
-		return false
+	if temp2 != 0 {
+		if hash[temp1]>>(8-temp2) != 0 {
+			return false
+		}
 	}
+
 	return true
 }
