@@ -7,13 +7,8 @@ import (
 	"time"
 )
 
-func mine_once(flag bool) int64 {
+func mine_once(flag bool, pow *ProofOfWork) int64 {
 	start := time.Now().UnixNano()
-	from := "aliceasdfasdfasdf"
-	to := "boaasdfasfasdfasdfb"
-	tx := NewCoinbaseTX(from, to)
-	block := NewGenesisBlock(tx, 16)
-	pow := NewProofOfWork(block)
 
 	if flag {
 		var hash [32]byte
@@ -67,15 +62,20 @@ func mine_once(flag bool) int64 {
 	return total
 }
 
-// func main() {
-// 	total1 := 0
-// 	for i := 0; i < 10; i++ {
-// 		total1 += int(mine_once(true))
-// 	}
-// 	total2 := 0
-// 	for i := 0; i < 10; i++ {
-// 		total2 += int(mine_once(false))
-// 	}
-// 	fmt.Printf("Slow mine 10 blocks: average time: %d ms\n", total1/1000000/10)
-// 	fmt.Printf("Fast mine 10 blocks: average time: %d ms\n", total2/1000000/10)
-// }
+func main() {
+	from := "aliceasdfasdfasdf"
+	to := "boaasdfasfasdfasdfb"
+	tx := NewCoinbaseTX(from, to)
+	block := NewGenesisBlock(tx, 16)
+	pow := NewProofOfWork(block)
+	total1 := 0
+	for i := 0; i < 10; i++ {
+		total1 += int(mine_once(true, pow))
+	}
+	total2 := 0
+	for i := 0; i < 10; i++ {
+		total2 += int(mine_once(false, pow))
+	}
+	fmt.Printf("Fast mine 10 blocks: average time: %d ms\n", total1/1000000/10)
+	fmt.Printf("Slow mine 10 blocks: average time: %d ms\n", total2/1000000/10)
+}
